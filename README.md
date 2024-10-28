@@ -57,7 +57,7 @@ npm install (recomended node version 20.16.0)
 
 **OPEN_AI_PROJECT_KEY** = your Open ai project key.
 
-**OPEN_AI_ORGANIZATION_KEY** = your assembly ai api key.
+**OPEN_AI_ORGANIZATION_KEY** = your Open ai api key.
 
 ## Usage
 
