@@ -13,7 +13,6 @@ An advanced NestJS API for handling and analyzing YouTube video data. This API a
 - [Environment Variables](#environment)
 - [Usage](#usage)
 - [Technologies](#technologies)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
