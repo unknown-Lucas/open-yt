@@ -25,7 +25,7 @@ To get started, follow these steps:
 **Clone the Repository**:
 
 ```bash
-git clone repo;
+git clone https://github.com/unknown-Lucas/open-yt-api.git;
 cd yt-video-analysis-api
 ```
 
