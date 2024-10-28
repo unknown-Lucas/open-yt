@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { AssemblyAI } from 'assemblyai';
 import { existsSync, unlinkSync } from 'fs';
-import { getUrlFromVideoId, issue } from 'src/utils';
+import { catchError, getUrlFromVideoId, issue } from 'src/utils';
 import { youtubeDl } from 'youtube-dl-exec';
 
 @Injectable()
@@ -13,16 +13,16 @@ export class TranscriptService {
   async getTranscription(videoId) {
     const filePath = `temp/audio/${videoId}`;
 
-    try {
-      await youtubeDl(getUrlFromVideoId(videoId), {
+    const [err] = await catchError(
+      youtubeDl(getUrlFromVideoId(videoId), {
         audioQuality: 0,
         audioFormat: 'mp3',
         output: filePath,
         extractAudio: true,
-      });
-    } catch (error) {
-      issue(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+      }),
+    );
+
+    err && issue(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
 
     if (!existsSync(filePath)) issue('Audio not found', HttpStatus.NOT_FOUND);
 

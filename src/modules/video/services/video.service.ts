@@ -1,31 +1,30 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { existsSync, readFileSync, unlinkSync } from 'fs';
-import { getUrlFromVideoId, issue } from 'src/utils';
+import { catchError, getUrlFromVideoId, issue } from 'src/utils';
 import { youtubeDl } from 'youtube-dl-exec';
 import { getInfo } from 'ytdl-core';
 
 @Injectable()
 export class VideoService {
   async getVideoInfo(videoId: string) {
-    try {
-      return await getInfo(getUrlFromVideoId(videoId));
-    } catch (error) {
-      issue(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const [err, info] = await catchError(getInfo(getUrlFromVideoId(videoId)));
+    err && issue(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    return info;
   }
 
   async getBlobFromData(videoId: string, onlyAudio: boolean) {
     const filePath = `temp/audio/${videoId}`;
-    try {
-      await youtubeDl(getUrlFromVideoId(videoId), {
+
+    const [err] = await catchError(
+      youtubeDl(getUrlFromVideoId(videoId), {
         audioQuality: 0,
         audioFormat: 'mp3',
         output: filePath,
         extractAudio: onlyAudio || undefined,
-      });
-    } catch (error) {
-      issue(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+      }),
+    );
+
+    err && issue(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
 
     if (!existsSync(filePath)) issue('Video not found', HttpStatus.NOT_FOUND);
 

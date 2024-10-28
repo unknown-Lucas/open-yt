@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { TranscriptService } from '../../transcript/services';
-import { issue, Prompts } from 'src/utils';
+import { catchError, issue, Prompts } from 'src/utils';
 import { videoSummaryQuery } from '../../../shared';
 import { Observable } from 'rxjs';
 
@@ -16,21 +16,27 @@ export class SummaryService {
     videoId: string,
     { ...queryParams }: videoSummaryQuery,
   ) {
-    try {
-      const videoTranscript =
-        await this.transcriptService.getTranscription(videoId);
+    const [trascriptErr, transcript] = await catchError(
+      this.transcriptService.getTranscription(videoId),
+    );
 
-      return await this.openAiClient.chat.completions.create({
+    trascriptErr &&
+      issue(trascriptErr.message, HttpStatus.INTERNAL_SERVER_ERROR);
+
+    const [summaryErr, summary] = await catchError(
+      this.openAiClient.chat.completions.create({
         temperature: queryParams.temperature ?? 0.2,
         model: queryParams.model ?? 'gpt-4o-mini',
         messages: [
           { role: 'system', content: Prompts.summary },
-          { role: 'user', content: String(videoTranscript.text) },
+          { role: 'user', content: String(transcript.text) },
         ],
-      });
-    } catch (error) {
-      issue(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+      }),
+    );
+
+    summaryErr && issue(summaryErr.message, HttpStatus.INTERNAL_SERVER_ERROR);
+
+    return summary;
   }
 
   getSummaryStream(videoId: string, { ...queryParams }: videoSummaryQuery) {
